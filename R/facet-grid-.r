@@ -128,7 +128,7 @@ facet_grid <- function(facets, margins = FALSE, scales = "fixed", space = "fixed
     x = any(scales %in% c("free_x", "free")),
     y = any(scales %in% c("free_y", "free"))
   )
-  space <- match.arg(space, c("fixed", "free"))
+  space <- match.arg(space, c("fixed", "free_x", "free_y", "free"))
   
   # Facets can either be a formula, a string, or a list of things to be
   # convert to quoted
@@ -151,7 +151,7 @@ facet_grid <- function(facets, margins = FALSE, scales = "fixed", space = "fixed
   
   facet(
     rows = rows, cols = cols, margins = margins, shrink = shrink,
-    free = free, space_is_free = (space == "free"),
+    free = free, space_is_free = (space != "fixed"), space = space, 
     labeller = labeller, as.table = as.table,
     subclass = "grid"
   )
@@ -321,12 +321,28 @@ facet_panels.grid <- function(facet, panel, coord, theme, geom_grobs) {
   panel_matrix <- matrix(panel_grobs, nrow = nrow, ncol = ncol, byrow = T)
 
   if(facet$space_is_free) {
-    size <- function(x) unit(diff(scale_dimension(x)), "null")
-    x_scales <- panel$layout$SCALE_X[panel$layout$ROW == 1]
-    y_scales <- panel$layout$SCALE_Y[panel$layout$COL == 1]
-
-    panel_widths <- do.call("unit.c", llply(panel$x_scales, size))[x_scales]
-    panel_heights <- do.call("unit.c", llply(panel$y_scales, size))[y_scales]
+    if(facet$space == "free"){
+      size <- function(x) unit(diff(scale_dimension(x)), "null")
+      x_scales <- panel$layout$SCALE_X[panel$layout$ROW == 1]
+      y_scales <- panel$layout$SCALE_Y[panel$layout$COL == 1]
+      
+      panel_widths <- do.call("unit.c", llply(panel$x_scales, size))[x_scales]
+      panel_heights <- do.call("unit.c", llply(panel$y_scales, size))[y_scales]
+    }
+    if(facet$space == "free_x"){
+      size <- function(x) unit(diff(scale_dimension(x)), "null")
+      x_scales <- panel$layout$SCALE_X[panel$layout$ROW == 1]
+      
+      panel_widths <- do.call("unit.c", llply(panel$x_scales, size))[x_scales]
+      panel_heights <- rep(unit(1 * aspect_ratio, "null"), nrow)
+    }
+    if(facet$space == "free_y"){
+      size <- function(x) unit(diff(scale_dimension(x)), "null")
+      y_scales <- panel$layout$SCALE_Y[panel$layout$COL == 1]
+      
+      panel_heights <- do.call("unit.c", llply(panel$y_scales, size))[y_scales]
+      panel_widths <- rep(unit(1, "null"), ncol)
+    }
   } else {
     panel_widths <- rep(unit(1, "null"), ncol)
     panel_heights <- rep(unit(1 * aspect_ratio, "null"), nrow)
