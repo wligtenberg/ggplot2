@@ -1,5 +1,6 @@
 #' Connect observations in original order
 #' 
+#' @inheritParams geom_point
 #' @param lineend Line end style (round, butt, square)
 #' @param linejoin Line join style (round, mitre, bevel)
 #' @param linemitre Line mitre limit (number greater than 1)
@@ -98,6 +99,9 @@ GeomPath <- proto(Geom, {
   draw_groups <- function(., ...) .$draw(...)
 
   draw <- function(., data, scales, coordinates, arrow = NULL, lineend = "butt", linejoin = "round", linemitre = 1, ..., na.rm = FALSE) {
+    if (!anyDuplicated(data$group)) {
+      message("geom_path: Every group consistents of only one observation. Do you need to adjust the group aesthetic?")
+    }
 
     keep <- function(x) {
       # from first non-missing to last non-missing
